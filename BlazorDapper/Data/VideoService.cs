@@ -8,29 +8,30 @@ namespace BlazorDapper.Data
 {
     public class VideoService : IVideoService
     {
+        private IDbConnection db;
         private readonly SqlConnectionConfiguration _configuration;
 
         public VideoService(SqlConnectionConfiguration configuration)
         {
             this._configuration = configuration;
+            db = new SqlConnection(configuration.Value);
         }
 
         public async Task<bool> VideoInsert(Video video)
         {
-            using (var con = new SqlConnection(_configuration.Value))
-            {
-                var parms = new DynamicParameters();
-                parms.Add("Title", video.Title, DbType.String);
-                parms.Add("DatePublished", video.Datepublished, DbType.Date);
-                parms.Add("IsActive", video.IsActive, DbType.Boolean);
-                //Insert by stored procedure
-                //await con.ExecuteAsync("spVideo_Insert", parms, commandType: CommandType.StoredProcedure);
+            //using (var con = new SqlConnection(_configuration.Value))
+            //{
+            //}
+            var parms = new DynamicParameters();
+            parms.Add("Title", video.Title, DbType.String);
+            parms.Add("DatePublished", video.Datepublished, DbType.Date);
+            parms.Add("IsActive", video.IsActive, DbType.Boolean);
+            //Insert by stored procedure
+            //await con.ExecuteAsync("spVideo_Insert", parms, commandType: CommandType.StoredProcedure);
 
-
-                //Raw Sqll Query
-                const string query = "INSERT INTO Video (Title, DatePublished, IsActive) VALUES (@Title, @DatePublished, @IsActive)";
-                await con.ExecuteAsync(query, new { video.Title, video.Datepublished, video.IsActive }, commandType: CommandType.Text);
-            }
+            //Raw Sqll Query
+            const string query = "INSERT INTO Video (Title, DatePublished, IsActive) VALUES (@Title, @DatePublished, @IsActive)";
+            await db.ExecuteAsync(query, new { @Title = video.Title, video.Datepublished, video.IsActive }, commandType: CommandType.Text);
             return true;
         }
         public async Task<IEnumerable<Video>> GetAllVideos()
@@ -58,6 +59,8 @@ namespace BlazorDapper.Data
                 //Get All by stored procedure
                 return await con.QueryFirstOrDefaultAsync<Video>("spVideo_GetVideoById", parms, commandType: CommandType.StoredProcedure);
             }
+            //var sql = "SELECT * FROM Video WHERE VideoId = @VideoId";
+            //return db.Query<Video>(sql, new { @VideoId = videoId }).Single();
         }
         public async Task<bool> UpdateVideo(Video video)
         {
@@ -72,6 +75,9 @@ namespace BlazorDapper.Data
 
             }
             return true;
+            //var sql = "UPDATE Video SET Title = @title, DatePublished= @DatePublished, IsActive= @IsActive, "
+            //            + "WHERE VideoId = @VideoId";
+            //db.Execute(sql, video);
         }
         public async Task<bool> DeleteVideoById(int videoId)
         {
