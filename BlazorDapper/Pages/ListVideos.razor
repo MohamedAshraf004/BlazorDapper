@@ -1,0 +1,50 @@
+﻿@page "/listvideos"
+@using BlazorDapper.Data
+@inject IVideoService VideoService
+
+<h3>List Videos</h3>
+@if (Videos == null)
+{
+    <h2 class="text-center">Loading</h2>
+}
+else
+{
+    <table class="table table-bordered table-active table-striped table-hover">
+        <thead class="table-bordered text-center">
+            <tr>
+                <td>Title</td>
+                <td>Date</td>
+                <td>Is Active</td>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Videos)
+            {
+                <tr>
+                    <td>@item.Title</td>
+                    <td>@item.Datepublished.ToString("dd MMM yyyy")</td>
+                    <td>@item.IsActive</td>
+                    <td>
+                        <a href="@($"updateVideo/{item.VideoId}")" class="btn btn-outline-primary">Update</a>
+                        <button style="cursor:pointer" @onclick="()=>DeleteVideo(item.VideoId)" class="btn btn-outline-danger">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+@code {
+
+    public IEnumerable<Video> Videos { get; set; }
+    protected async override Task OnInitializedAsync()
+    {
+        Videos = await VideoService.GetAllVideos();
+    }
+    protected async Task DeleteVideo(int videoid)
+    {
+        await VideoService.DeleteVideoById(videoid);
+        Videos = await VideoService.GetAllVideos();
+    }
+}
