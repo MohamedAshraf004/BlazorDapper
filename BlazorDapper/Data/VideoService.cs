@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
@@ -10,11 +11,14 @@ namespace BlazorDapper.Data
     {
         private IDbConnection db;
         private readonly SqlConnectionConfiguration _configuration;
+        private readonly IConfiguration config;
 
-        public VideoService(SqlConnectionConfiguration configuration)
+        public VideoService(SqlConnectionConfiguration configuration, IConfiguration config)
         {
             this._configuration = configuration;
-            db = new SqlConnection(configuration.Value);
+            this.config = config;
+            //db = new SqlConnection(configuration.Value);
+            db = new SqlConnection(config.GetConnectionString("SqlDbConnection"));
         }
 
         public async Task<bool> VideoInsert(Video video)
@@ -29,9 +33,10 @@ namespace BlazorDapper.Data
             //Insert by stored procedure
             //await con.ExecuteAsync("spVideo_Insert", parms, commandType: CommandType.StoredProcedure);
 
-            //Raw Sqll Query
+            //Raw Sql Query
             const string query = "INSERT INTO Video (Title, DatePublished, IsActive) VALUES (@Title, @DatePublished, @IsActive)";
             await db.ExecuteAsync(query, new { @Title = video.Title, video.Datepublished, video.IsActive }, commandType: CommandType.Text);
+            //await db.ExecuteAsync(query, parms, commandType: CommandType.Text);
             return true;
         }
         public async Task<IEnumerable<Video>> GetAllVideos()
@@ -46,7 +51,6 @@ namespace BlazorDapper.Data
         {
             using (var con = new SqlConnection(_configuration.Value))
             {
-                //Get All by stored procedure
                 return await con.QueryAsync<Video>("spVideo_GetAllActive", commandType: CommandType.StoredProcedure);
             }
         }
@@ -56,11 +60,11 @@ namespace BlazorDapper.Data
             parms.Add("Videoid", videoId, DbType.Int32);
             using (var con = new SqlConnection(_configuration.Value))
             {
-                //Get All by stored procedure
                 return await con.QueryFirstOrDefaultAsync<Video>("spVideo_GetVideoById", parms, commandType: CommandType.StoredProcedure);
+                //return await con.QueryFirstOrDefaultAsync<Video>("spVideo_GetVideoById", new { @VideoId = videoId }, commandType: CommandType.StoredProcedure);
             }
             //var sql = "SELECT * FROM Video WHERE VideoId = @VideoId";
-            //return db.Query<Video>(sql, new { @VideoId = videoId }).Single();
+            //return db.QueryFirstOrDefaultAsync<Video>(sql, new { @VideoId = videoId });
         }
         public async Task<bool> UpdateVideo(Video video)
         {
@@ -85,7 +89,6 @@ namespace BlazorDapper.Data
             parms.Add("Videoid", videoId, DbType.Int32);
             using (var con = new SqlConnection(_configuration.Value))
             {
-                //Get All by stored procedure
                 await con.ExecuteAsync("spVideo_DeleteVideo", parms, commandType: CommandType.StoredProcedure);
             }
             return true;
