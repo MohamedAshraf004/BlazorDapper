@@ -81,7 +81,7 @@ namespace BlazorDapper.Data
             return true;
             //var sql = "UPDATE Video SET Title = @title, DatePublished= @DatePublished, IsActive= @IsActive, "
             //            + "WHERE VideoId = @VideoId";
-            //db.Execute(sql, video);
+            //db.Execute(sql, video, commandType: CommandType.Text);
         }
         public async Task<bool> DeleteVideoById(int videoId)
         {
